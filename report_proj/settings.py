@@ -23,9 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-vh$f11yc1&$66ko%zs+1wt=u86yosa3ebh-%l1no56up!au9m$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ALLOWED_HOSTS = []
+
+if '195.35.20.172:8002' in ALLOWED_HOSTS:
+    DEBUG = False
+
+else:
+    DEBUG = True
 
 
 # Application definition
@@ -83,7 +87,7 @@ pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "report",
+        "NAME": "reports",
         "USER": "root",
         "PASSWORD": "root",
         "HOST": "127.0.0.1",

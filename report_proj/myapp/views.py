@@ -137,7 +137,6 @@ class reports(APIView):
             
             elif 'Sales-Performance-by-Customer' == kwargs.get('query_name'):
                 # Organize data by customer names and product categories
-                # Organize data by customer names and product categories
                 customers = set()
                 categories = set()
                 sales_data = defaultdict(lambda: defaultdict(float))
