@@ -4,4 +4,4 @@ from .models import ReportDefinition
 class ReportDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportDefinition
-        fields ='__all__'
+        fields = ['name', 'query', 'query_id', 'visualization_type']

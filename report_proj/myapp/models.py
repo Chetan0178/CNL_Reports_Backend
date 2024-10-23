@@ -10,11 +10,6 @@ class ReportDefinition(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  # Updated on every save
 
-    def save(self, *args, **kwargs):
-        if not self.query_id:
-            self.query_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name
     
