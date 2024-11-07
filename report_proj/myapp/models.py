@@ -6,7 +6,7 @@ class ReportDefinition(models.Model):
     name = models.CharField(max_length=255)
     query = models.TextField()
     query_id = models.CharField(max_length=5, unique=True, primary_key=True)  # Set as primary key
-    visualization_type = models.CharField(max_length=50)
+    visualization_type = models.CharField(max_length=50, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  # Updated on every save
 

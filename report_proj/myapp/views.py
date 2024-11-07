@@ -7,17 +7,7 @@ from report_proj.myapp.models import ReportDefinition
 from report_proj.myapp.serializers import ReportDefinitionSerializer
 import json
 from collections import defaultdict
-
-
-class ReportDefinitionView(APIView):
-    '''This class is used for save custom query'''
-    def post(self, request):
-        serializer = ReportDefinitionSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response("Query Saved Successfully!", status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+from django.conf import settings
 
 class reports(APIView):
     def get(self, request, **kwargs):
@@ -471,33 +461,53 @@ class reports(APIView):
 class DatabaseView(APIView):
     '''this class is used for fetch data from a specific table, fetch all tables name, table structure, '''
     def get(self, request, table_name=None):
+        # Fetch structure of a specific table
         if table_name:
-            # Fetch data from a specific table
+            database_name = settings.DATABASES['default']['NAME']
             try:
                 with connection.cursor() as cursor:
+                    # Fetch column names
                     cursor.execute(f"SELECT * FROM {table_name}")
                     columns = [col[0] for col in cursor.description]
-                    data = cursor.fetchall()
-                    return Response({"columns": columns, "data": data}, status=status.HTTP_200_OK)
+                    data = cursor.fetchall()  # Not used in the response
+                    
+                    # Fetch related table columns
+                    query = f"""
+                        SELECT COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+                        FROM information_schema.KEY_COLUMN_USAGE
+                        WHERE TABLE_SCHEMA = '{database_name}'
+                        AND TABLE_NAME = '{table_name}'
+                        AND REFERENCED_TABLE_NAME IS NOT NULL;
+                    """
+                    cursor.execute(query)
+                    relations = [
+                        f"{table_name}.{row[0]} = {row[1]}.{row[2]}"
+                        for row in cursor.fetchall()
+                    ]
+
+                    return Response({"Relation": relations, "columns": columns}, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         # Fetch all table names
         with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT table_name FROM information_schema.tables where table_schema = 'report'")
+            # Access the database name
+            database_name = settings.DATABASES['default']['NAME']
+            fetch_Table_name_query = f"SELECT table_name FROM information_schema.tables where table_schema = '{database_name}'"
+            cursor.execute(fetch_Table_name_query)
             tables = [row[0] for row in cursor.fetchall()]
-            return Response(tables, status=status.HTTP_200_OK)
+            return Response({"tables" : tables}, status=status.HTTP_200_OK)
 
-    def get_table_structure(self, request, table_name):
-        # Fetch structure of a specific table
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = %s",
-                [table_name]
-            )
-            columns = cursor.fetchall()
-            return Response(columns, status=status.HTTP_200_OK)
+    # def get_table_structure(self, request, table_name):
+    #     # Fetch structure of a specific table
+    #     query= "SELECT  REFERENCED_TABLE_NAME AS related_table, COLUMN_NAME AS foreign_key_column FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = 'cnl2' -- Replace with your actual database name if different AND TABLE_NAME = 'vendor' AND REFERENCED_TABLE_NAME IS NOT NULL;" 
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(
+    #             "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = %s",
+    #             [table_name]
+    #         )
+    #         columns = cursor.fetchall(), table_name
+    #         return Response( columns, status=status.HTTP_200_OK)
 
 
 class ExecuteQueryView(APIView):
@@ -515,3 +525,12 @@ class ExecuteQueryView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ReportDefinitionView(APIView):
+    '''This class is used for save custom query'''
+    def post(self, request):
+        serializer = ReportDefinitionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response("Query Saved Successfully!", status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
