@@ -19,7 +19,6 @@ class reports(APIView):
                 query = serializer.get('query')
                 cursor.execute(query)
                 results = cursor.fetchall()
-
             if 'monthly-sales' == kwargs.get('query_name'):
                 # Prepare the response data
                 months = [
@@ -64,38 +63,6 @@ class reports(APIView):
                 }
 
             elif 'sales-order-trend-weekly' == kwargs.get('query_name'):
-                # # Initialize the lists
-                # # Initialize lists for the weeks
-                # first_week = []
-                # second_week = []
-                # third_week = []
-                # fourth_week = []
-                # order_count = []
-                # invoices = []
-                # returns = []
-                #   # Print the results
-
-                # # Iterate through the data and populate the lists
-                # for entry in results:
-                #     year, week_number, _, _, _ = entry
-                #     if week_number % 4 == 1:  # 1st week of the month
-                #         first_week.append(week_number)
-                #     elif week_number % 4 == 2:  # 2nd week of the month
-                #         second_week.append(week_number)
-                #     elif week_number % 4 == 3:  # 3rd week of the month
-                #         third_week.append(week_number)
-                #     elif week_number % 4 == 0:  # 4th week of the month
-                #         fourth_week.append(week_number)
-                #     order_count.append(entry[2])   # Order count is the second element
-                #     invoices.append(entry[3])      # Invoices count is the third element
-                #     returns.append(entry[4])       # Returns count is the fourth element
-
-                # week = {'first_week' : first_week,
-                #         'second_week' : second_week,
-                #         'third_week' : third_week,
-                #         'fourth_week' : fourth_week
-                #     }
-
                 weeks = []
                 order_count = []
                 invoices = []
@@ -170,49 +137,7 @@ class reports(APIView):
                     "prod_category_list": prod_category_list,
                     "price_list": price_list
                 }
-
-            # elif 'top-1-high-selling-Products-monthly' == kwargs.get('query_name'):
-            #     # Define the order of months
-            #     month_order = [
-            #         "January", "February", "March", "April", "May",
-            #         "June", "July", "August", "September", "October",
-            #         "November", "December"
-            #     ]
-
-            #     # Initialize dictionaries to hold data
-            #     months = []
-            #     product_names = []
-            #     sales_dict = {}
-
-            #     # Populate sales data
-            #     for entry in results:
-            #         month, product, sales = entry
-            #         months.append(month)
-            #         product_names.append(product)
-
-            #         if product not in sales_dict:
-            #             sales_dict[product] = {month: sales}
-            #         else:
-            #             if month not in sales_dict[product]:
-            #                 sales_dict[product][month] = sales
-            #             else:
-            #                 sales_dict[product][month] += sales  # Aggregate sales for same product and month
-
-            #     # Prepare the final sales list
-            #     sales = []
-
-            #     for product in sales_dict:
-            #         sales_list = []
-            #         for month in month_order:
-            #             sales_list.append(sales_dict[product].get(month, 0))
-            #         sales.append(sales_list)
-
-            #     # Print the final lists
-            #     response_data = {
-            #         "months": months,
-            #         "product_names": product_names,
-            #         "sales": sales
-            #     }
+            
             elif 'High-Selling-Products-monthly' == kwargs.get('query_name'):
                 # Initialize lists
                 months = [
@@ -454,6 +379,7 @@ class reports(APIView):
                 pass
 
             return Response(response_data, status=status.HTTP_200_OK)
+        
         except ReportDefinition.DoesNotExist:
             return Response({"error": "Report not found."}, status=status.HTTP_404_NOT_FOUND)
 
