@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'report_proj.myapp',
+    'report_proj.reports1',
 ]
 
 MIDDLEWARE = [
@@ -87,7 +88,7 @@ pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "cnl2",
+        "NAME": "report",
         "USER": "root",
         "PASSWORD": "root",
         "HOST": "127.0.0.1",
