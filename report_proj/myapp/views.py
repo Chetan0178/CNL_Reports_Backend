@@ -8,13 +8,6 @@ from report_proj.myapp.serializers import ReportDefinitionSerializer
 import json
 from collections import defaultdict
 from django.conf import settings
-from .utils import (
-                    prepare_monthly_sales_data,
-                    prepare_trend_data,
-                    prepare_high_selling_data,
-                    prepare_revenue_data,
-                    prepare_revenue_series,
-                )
 
 class reports(APIView):
     def get(self, request, **kwargs):
@@ -26,378 +19,98 @@ class reports(APIView):
                 query = serializer.get('query')
                 cursor.execute(query)
                 results = cursor.fetchall()
-            # if 'monthly-sales' == kwargs.get('query_name'):
-            #     # Prepare the response data
-            #     months = [
-            #         "January", "February", "March", "April", "May",
-            #         "June", "July", "August", "September", "October",
-            #         "November", "December"
-            #     ]
-            #     sales_count = [0] * 12
-
-            #     for result in results:
-            #         month_index = int(result[0]) - 1
-            #         sales_count[month_index] = result[1]
-
-            #     response_data = {
-            #         "month": months,
-            #         "sales_count": sales_count,
-            #     }
-
-            # elif 'sales-order-trend-daily' == kwargs.get('query_name'):
-            #     # Initialize the lists
-            #     dates = []
-            #     order_count = []
-            #     invoices = []
-            #     returns = []
-
-            #     # Iterate through the data and populate the lists
-            #     for entry in results:
-            #         dates.append(entry[0])         # Date is the first element
-            #         # Order count is the second element
-            #         order_count.append(entry[1])
-            #         # Invoices count is the third element
-            #         invoices.append(entry[2])
-            #         # Returns count is the fourth element
-            #         returns.append(entry[3])
-
-            #     # Create the final output dictionary
-            #     response_data = {
-            #         "dates": dates,
-            #         "order_count": order_count,
-            #         "invoices": invoices,
-            #         "returns": returns
-            #     }
-
-            # elif 'sales-order-trend-weekly' == kwargs.get('query_name'):
-            #     weeks = []
-            #     order_count = []
-            #     invoices = []
-            #     returns = []
-
-            #     # Populate the lists
-            #     for entry in results:
-            #         weeks.append(entry[1])  # Week number
-            #         order_count.append(entry[2])      # Total Sales Orders
-            #         invoices.append(entry[3])      # Converted To Invoices
-            #         returns.append(entry[4])
-
-            #     # Create the final output dictionary   sales-order-trend-weekly
-            #     response_data = {
-            #         "dates": weeks,
-            #         "order_count": order_count,
-            #         "invoices": invoices,
-            #         "returns": returns
-            #     }
-
-            # elif 'sales-order-trend-monthly' == kwargs.get('query_name'):
-            #     # Initialize the lists
-            #     Week_Number = []
-            #     order_count = []
-            #     invoices = []
-            #     returns = []
-
-            #     # Iterate through the data and populate the lists
-            #     for entry in results:
-            #         # Date is the first element
-            #         Week_Number.append(entry[1])
-            #         # Order count is the second element
-            #         order_count.append(entry[2])
-            #         # Invoices count is the third element
-            #         invoices.append(entry[3])
-            #         # Returns count is the fourth element
-            #         returns.append(entry[4])
-
-            #     # Create the final output dictionary   sales-order-trend-weekly
-            #     response_data = {
-            #         "dates": Week_Number,
-            #         "order_count": order_count,
-            #         "invoices": invoices,
-            #         "returns": returns
-            #     }
-
-            # elif 'Sales-Performance-by-Customer' == kwargs.get('query_name'):
-            #     # Organize data by customer names and product categories
-            #     customers = set()
-            #     categories = set()
-            #     sales_data = defaultdict(lambda: defaultdict(float))
-
-            #     for customer, category, sales in results:
-            #         customers.add(customer)
-            #         categories.add(category)
-            #         sales_data[customer][category] = float(
-            #             sales)  # Ensure sales are float
-
-            #     # Sort customers and categories for consistent labeling
-            #     sorted_customers = sorted(customers)
-            #     sorted_categories = sorted(categories)
-
-            #     # Prepare separate lists
-            #     cust_name_list = sorted_customers
-            #     prod_category_list = sorted_categories
-            #     price_list = [[sales_data[customer].get(
-            #         category, 0.0) for customer in sorted_customers] for category in sorted_categories]
-
-            #     # Combine into a dictionary for the API response
-            #     response_data = {
-            #         "cust_name_list": cust_name_list,
-            #         "prod_category_list": prod_category_list,
-            #         "price_list": price_list
-            #     }
-            
-            # elif 'High-Selling-Products-monthly' == kwargs.get('query_name'):
-            #     # Initialize lists
-            #     months = [
-            #         "January", "February", "March", "April", "May", "June",
-            #         "July", "August", "September", "October", "November", "December"
-            #     ]
-
-            #     product_names = set()
-            #     sales_data = {month: [] for month in months}
-
-            #     # Process the data
-            #     for month, product, sales in results:
-            #         if product not in product_names:
-            #             product_names.add(product)
-
-            #         sales_data[month].append((product, sales))
-
-            #     # Create a sorted list of product names
-            #     product_names = sorted(product_names)
-
-            #     # Initialize sales list
-            #     sales = [[] for _ in range(len(product_names))]
-
-            #     # Fill in sales data
-            #     for month in months:
-            #         for product in product_names:
-            #             # Find the sales amount for the current product in the current month
-            #             amount = next(
-            #                 (sale for prod, sale in sales_data[month] if prod == product), 0)
-            #             # Append the sales amount to the corresponding product's sales list
-            #             sales[product_names.index(product)].append(amount)
-
-            #     # Output
-            #     response_data = {
-            #         "label": months,
-            #         "product_names": product_names,
-            #         "sales_data": sales
-            #     }
-
-            # elif 'High-Selling-Products-weekly' == kwargs.get('query_name'):
-            #     # Initialize lists
-            #     # Initialize lists
-            #     week = []
-            #     product_names = []
-            #     sales_data = {}
-
-            #     # Process the data
-            #     for week_number, product, sales in results:
-            #         if week_number not in week:
-            #             week.append(week_number)
-
-            #         if product not in product_names:
-            #             product_names.append(product)
-            #             # Initialize sales data for the new product
-            #             sales_data[product] = [0] * len(week)
-
-            #         week_index = week.index(week_number)
-
-            #         # Ensure the index is within the range
-            #         if week_index < len(sales_data[product]):
-            #             sales_data[product][week_index] += sales
-            #         else:
-            #             # Handle case where week_index exceeds current sales_data size
-            #             sales_data[product].extend(
-            #                 [0] * (week_index - len(sales_data[product]) + 1))
-            #             sales_data[product][week_index] += sales
-
-            #     # Convert sales_data from dict to list format
-            #     sales_data_list = [sales_data[product]
-            #                        for product in product_names]
-
-            #     # Output
-            #     response_data = {
-            #         "label": week,
-            #         "product_names": product_names,
-            #         "sales_data": sales_data_list
-            #     }
-
-            # elif 'High-Selling-Products-yearly' == kwargs.get('query_name'):
-            #     # Initialize the output structure
-            #     years = []
-            #     product_names = []
-            #     sales_data = {}
-
-            #     # Process the data
-            #     for entry in results:
-            #         year, product, sales = entry
-
-            #         # Ensure the year is in the list
-            #         if year not in years:
-            #             years.append(year)
-
-            #         # Initialize product in the sales_data if not already present
-            #         if product not in product_names:
-            #             product_names.append(product)
-            #             # Create a sales list initialized to 0 for each year
-            #             sales_data[product] = [0] * len(years)
-
-            #         # Find the index of the current year
-            #         year_index = years.index(year)
-
-            #         # Ensure the sales_data for the product has the correct length
-            #         while len(sales_data[product]) < len(years):
-            #             # Fill with zeros if necessary
-            #             sales_data[product].append(0)
-
-            #         # Accumulate sales
-            #         sales_data[product][year_index] += sales
-
-            #     # Prepare the final output
-
-            #     # Final output structure
-            #     response_data = {
-            #         "label": years,
-            #         "product_names": product_names,
-            #         "sales_data": [sales_data[product] for product in product_names],
-            #     }
-
-            # elif 'todays_revenue' == kwargs.get('query_name'):
-            #     # Extracting the revenue
-            #     revenue = results[0][0]
-
-            #     # Creating the desired dictionary
-            #     response_data = {
-            #         "label": "todays_revenue",
-            #         "revenue": revenue
-            #     }
-
-            # elif 'yesterday_revenue' == kwargs.get('query_name'):
-            #     # Extracting the revenue
-            #     revenue = results[0][0]
-
-            #     # Creating the desired dictionary
-            #     response_data = {
-            #         "label": "yesterday_revenue",
-            #         "revenue": revenue
-            #     }
-
-            # elif 'last_3_months_revenue' == kwargs.get('query_name'):
-            #     # Initialize the lists
-            #     months = []
-            #     revenue = []
-
-            #     # Extracting the data
-            #     for item in results:
-            #         months.append(item[0])  # Append the month
-            #         revenue.append(item[1])  # Append the revenue
-
-            #     response_data = {
-            #         "label": months,
-            #         "revenue": revenue
-            #     }
-
-            # elif 'last_7_days_revenue' == kwargs.get('query_name'):
-            #     # Extracting the revenue
-            #     revenue = results[0][0]
-
-            #     # Creating the desired dictionary
-            #     response_data = {
-            #         "label": "last_7_days_revenue",
-            #         "revenue": revenue
-            #     }
-
-            # elif 'current_month_revenue' == kwargs.get('query_name'):
-            #     # Extracting the revenue
-            #     label = results[0][0]
-            #     revenue = results[0][1]
-
-            #     # Creating the desired dictionary
-            #     response_data = {
-            #         "label": label,
-            #         "revenue": revenue
-            #     }
-            # elif 'last_month_revenue' == kwargs.get('query_name'):
-            #     # Extracting the revenue
-            #     label = results[0][0]
-            #     revenue = results[0][1]
-
-            #     # Creating the desired dictionary
-            #     response_data = {
-            #         "label": label,
-            #         "revenue": revenue
-            #     }
-
-            # elif 'last_6_months_revenue' == kwargs.get('query_name'):
-            #     # Initialize the lists
-            #     months = []
-            #     revenue = []
-
-            #     # Extracting the data
-            #     for item in results:
-            #         months.append(item[0])  # Append the month
-            #         revenue.append(item[1])  # Append the revenue
-
-            #     response_data = {
-            #         "label": months,
-            #         "revenue": revenue
-            #     }
-
-            # elif 'current_quarter_revenue' == kwargs.get('query_name'):
-            #     # Initialize the lists
-            #     months = []
-            #     revenue = []
-
-            #     # Extracting the data
-            #     for item in results:
-            #         months.append(item[0])  # Append the month
-            #         revenue.append(item[1])  # Append the revenue
-
-            #     response_data = {
-            #         "label": months,
-            #         "revenue": revenue
-            #     }
-
-            # elif 'year_to_current_date_revenue' == kwargs.get('query_name'):
-            #     # Initialize the lists
-            #     months = []
-            #     revenue = []
-
-            #     # Extracting the data
-            #     for item in results:
-            #         months.append(item[0])  # Append the month
-            #         revenue.append(item[1])  # Append the revenue
-
-            #     response_data = {
-            #         "label": months,
-            #         "revenue": revenue
-            #     }
-
-            # elif 'last_12_months_revenue' == kwargs.get('query_name'):
-            #     # Extracting the revenue
-            #     revenue = results[0][0]
-
-            #     # Creating the desired dictionary
-            #     response_data = {
-            #         "label": "Last Year",
-            #         "revenue": revenue
-            #     }
-            #     pass
-
-            # return Response(response_data, status=status.HTTP_200_OK)
-
             if 'monthly-sales' == kwargs.get('query_name'):
-                response_data = prepare_monthly_sales_data(results)
+                # Prepare the response data
+                months = [
+                    "January", "February", "March", "April", "May",
+                    "June", "July", "August", "September", "October",
+                    "November", "December"
+                ]
+                sales_count = [0] * 12
 
-            elif kwargs.get('query_name') in ['sales-order-trend-daily', 'sales-order-trend-weekly', 'sales-order-trend-monthly']:
-                response_data = prepare_trend_data(
-                    results,
-                    labels=["dates", "order_count", "invoices", "returns"],
-                    data_indexes=[0, 1, 2, 3]
-                )
+                for result in results:
+                    month_index = int(result[0]) - 1
+                    sales_count[month_index] = result[1]
+
+                response_data = {
+                    "month": months,
+                    "sales_count": sales_count,
+                }
+
+            elif 'sales-order-trend-daily' == kwargs.get('query_name'):
+                # Initialize the lists
+                dates = []
+                order_count = []
+                invoices = []
+                returns = []
+
+                # Iterate through the data and populate the lists
+                for entry in results:
+                    dates.append(entry[0])         # Date is the first element
+                    # Order count is the second element
+                    order_count.append(entry[1])
+                    # Invoices count is the third element
+                    invoices.append(entry[2])
+                    # Returns count is the fourth element
+                    returns.append(entry[3])
+
+                # Create the final output dictionary
+                response_data = {
+                    "dates": dates,
+                    "order_count": order_count,
+                    "invoices": invoices,
+                    "returns": returns
+                }
+
+            elif 'sales-order-trend-weekly' == kwargs.get('query_name'):
+                weeks = []
+                order_count = []
+                invoices = []
+                returns = []
+
+                # Populate the lists
+                for entry in results:
+                    weeks.append(entry[1])  # Week number
+                    order_count.append(entry[2])      # Total Sales Orders
+                    invoices.append(entry[3])      # Converted To Invoices
+                    returns.append(entry[4])
+
+                # Create the final output dictionary   sales-order-trend-weekly
+                response_data = {
+                    "dates": weeks,
+                    "order_count": order_count,
+                    "invoices": invoices,
+                    "returns": returns
+                }
+
+            elif 'sales-order-trend-monthly' == kwargs.get('query_name'):
+                # Initialize the lists
+                Week_Number = []
+                order_count = []
+                invoices = []
+                returns = []
+
+                # Iterate through the data and populate the lists
+                for entry in results:
+                    # Date is the first element
+                    Week_Number.append(entry[1])
+                    # Order count is the second element
+                    order_count.append(entry[2])
+                    # Invoices count is the third element
+                    invoices.append(entry[3])
+                    # Returns count is the fourth element
+                    returns.append(entry[4])
+
+                # Create the final output dictionary   sales-order-trend-weekly
+                response_data = {
+                    "dates": Week_Number,
+                    "order_count": order_count,
+                    "invoices": invoices,
+                    "returns": returns
+                }
 
             elif 'Sales-Performance-by-Customer' == kwargs.get('query_name'):
+                # Organize data by customer names and product categories
                 customers = set()
                 categories = set()
                 sales_data = defaultdict(lambda: defaultdict(float))
@@ -405,56 +118,265 @@ class reports(APIView):
                 for customer, category, sales in results:
                     customers.add(customer)
                     categories.add(category)
-                    sales_data[customer][category] = float(sales)
+                    sales_data[customer][category] = float(
+                        sales)  # Ensure sales are float
 
+                # Sort customers and categories for consistent labeling
                 sorted_customers = sorted(customers)
                 sorted_categories = sorted(categories)
 
-                response_data = {
-                    "cust_name_list": sorted_customers,
-                    "prod_category_list": sorted_categories,
-                    "price_list": [
-                        [sales_data[customer].get(category, 0.0) for customer in sorted_customers]
-                        for category in sorted_categories
-                    ]
-                }
+                # Prepare separate lists
+                cust_name_list = sorted_customers
+                prod_category_list = sorted_categories
+                price_list = [[sales_data[customer].get(
+                    category, 0.0) for customer in sorted_customers] for category in sorted_categories]
 
+                # Combine into a dictionary for the API response
+                response_data = {
+                    "cust_name_list": cust_name_list,
+                    "prod_category_list": prod_category_list,
+                    "price_list": price_list
+                }
+            
             elif 'High-Selling-Products-monthly' == kwargs.get('query_name'):
+                # Initialize lists
                 months = [
                     "January", "February", "March", "April", "May", "June",
                     "July", "August", "September", "October", "November", "December"
                 ]
-                response_data = prepare_high_selling_data(results, months)
+
+                product_names = set()
+                sales_data = {month: [] for month in months}
+
+                # Process the data
+                for month, product, sales in results:
+                    if product not in product_names:
+                        product_names.add(product)
+
+                    sales_data[month].append((product, sales))
+
+                # Create a sorted list of product names
+                product_names = sorted(product_names)
+
+                # Initialize sales list
+                sales = [[] for _ in range(len(product_names))]
+
+                # Fill in sales data
+                for month in months:
+                    for product in product_names:
+                        # Find the sales amount for the current product in the current month
+                        amount = next(
+                            (sale for prod, sale in sales_data[month] if prod == product), 0)
+                        # Append the sales amount to the corresponding product's sales list
+                        sales[product_names.index(product)].append(amount)
+
+                # Output
+                response_data = {
+                    "label": months,
+                    "product_names": product_names,
+                    "sales_data": sales
+                }
 
             elif 'High-Selling-Products-weekly' == kwargs.get('query_name'):
-                # Assuming results includes weeks in chronological order
-                weeks = sorted(set(entry[0] for entry in results))
-                response_data = prepare_high_selling_data(results, weeks)
+                # Initialize lists
+                # Initialize lists
+                week = []
+                product_names = []
+                sales_data = {}
+
+                # Process the data
+                for week_number, product, sales in results:
+                    if week_number not in week:
+                        week.append(week_number)
+
+                    if product not in product_names:
+                        product_names.append(product)
+                        # Initialize sales data for the new product
+                        sales_data[product] = [0] * len(week)
+
+                    week_index = week.index(week_number)
+
+                    # Ensure the index is within the range
+                    if week_index < len(sales_data[product]):
+                        sales_data[product][week_index] += sales
+                    else:
+                        # Handle case where week_index exceeds current sales_data size
+                        sales_data[product].extend(
+                            [0] * (week_index - len(sales_data[product]) + 1))
+                        sales_data[product][week_index] += sales
+
+                # Convert sales_data from dict to list format
+                sales_data_list = [sales_data[product]
+                                   for product in product_names]
+
+                # Output
+                response_data = {
+                    "label": week,
+                    "product_names": product_names,
+                    "sales_data": sales_data_list
+                }
 
             elif 'High-Selling-Products-yearly' == kwargs.get('query_name'):
-                years = sorted(set(entry[0] for entry in results))
-                response_data = prepare_high_selling_data(results, years)
+                # Initialize the output structure
+                years = []
+                product_names = []
+                sales_data = {}
 
-            revenue_map = {
-                'todays_revenue': "todays_revenue",
-                'yesterday_revenue': "yesterday_revenue",
-                'last_7_days_revenue': "last_7_days_revenue",
-                'last_12_months_revenue': "Last Year"
-            }
-            query_name = kwargs.get('query_name')
+                # Process the data
+                for entry in results:
+                    year, product, sales = entry
 
-            if query_name in revenue_map:
-                response_data = prepare_revenue_data(results, revenue_map[query_name])
+                    # Ensure the year is in the list
+                    if year not in years:
+                        years.append(year)
 
+                    # Initialize product in the sales_data if not already present
+                    if product not in product_names:
+                        product_names.append(product)
+                        # Create a sales list initialized to 0 for each year
+                        sales_data[product] = [0] * len(years)
 
-            elif kwargs.get('query_name') in ['current_month_revenue', 'last_month_revenue']:
+                    # Find the index of the current year
+                    year_index = years.index(year)
+
+                    # Ensure the sales_data for the product has the correct length
+                    while len(sales_data[product]) < len(years):
+                        # Fill with zeros if necessary
+                        sales_data[product].append(0)
+
+                    # Accumulate sales
+                    sales_data[product][year_index] += sales
+
+                # Prepare the final output
+
+                # Final output structure
                 response_data = {
-                    "label": results[0][0],
-                    "revenue": results[0][1]
-                }             
+                    "label": years,
+                    "product_names": product_names,
+                    "sales_data": [sales_data[product] for product in product_names],
+                }
 
-            elif kwargs.get('query_name')in ['last_3_months_revenue', 'last_6_months_revenue', 'current_quarter_revenue', 'year_to_current_date_revenue']:
-                response_data = prepare_revenue_series(results)
+            elif 'todays_revenue' == kwargs.get('query_name'):
+                # Extracting the revenue
+                revenue = results[0][0]
+
+                # Creating the desired dictionary
+                response_data = {
+                    "label": "todays_revenue",
+                    "revenue": revenue
+                }
+
+            elif 'yesterday_revenue' == kwargs.get('query_name'):
+                # Extracting the revenue
+                revenue = results[0][0]
+
+                # Creating the desired dictionary
+                response_data = {
+                    "label": "yesterday_revenue",
+                    "revenue": revenue
+                }
+
+            elif 'last_3_months_revenue' == kwargs.get('query_name'):
+                # Initialize the lists
+                months = []
+                revenue = []
+
+                # Extracting the data
+                for item in results:
+                    months.append(item[0])  # Append the month
+                    revenue.append(item[1])  # Append the revenue
+
+                response_data = {
+                    "label": months,
+                    "revenue": revenue
+                }
+
+            elif 'last_7_days_revenue' == kwargs.get('query_name'):
+                # Extracting the revenue
+                revenue = results[0][0]
+
+                # Creating the desired dictionary
+                response_data = {
+                    "label": "last_7_days_revenue",
+                    "revenue": revenue
+                }
+
+            elif 'current_month_revenue' == kwargs.get('query_name'):
+                # Extracting the revenue
+                label = results[0][0]
+                revenue = results[0][1]
+
+                # Creating the desired dictionary
+                response_data = {
+                    "label": label,
+                    "revenue": revenue
+                }
+            elif 'last_month_revenue' == kwargs.get('query_name'):
+                # Extracting the revenue
+                label = results[0][0]
+                revenue = results[0][1]
+
+                # Creating the desired dictionary
+                response_data = {
+                    "label": label,
+                    "revenue": revenue
+                }
+
+            elif 'last_6_months_revenue' == kwargs.get('query_name'):
+                # Initialize the lists
+                months = []
+                revenue = []
+
+                # Extracting the data
+                for item in results:
+                    months.append(item[0])  # Append the month
+                    revenue.append(item[1])  # Append the revenue
+
+                response_data = {
+                    "label": months,
+                    "revenue": revenue
+                }
+
+            elif 'current_quarter_revenue' == kwargs.get('query_name'):
+                # Initialize the lists
+                months = []
+                revenue = []
+
+                # Extracting the data
+                for item in results:
+                    months.append(item[0])  # Append the month
+                    revenue.append(item[1])  # Append the revenue
+
+                response_data = {
+                    "label": months,
+                    "revenue": revenue
+                }
+
+            elif 'year_to_current_date_revenue' == kwargs.get('query_name'):
+                # Initialize the lists
+                months = []
+                revenue = []
+
+                # Extracting the data
+                for item in results:
+                    months.append(item[0])  # Append the month
+                    revenue.append(item[1])  # Append the revenue
+
+                response_data = {
+                    "label": months,
+                    "revenue": revenue
+                }
+
+            elif 'last_12_months_revenue' == kwargs.get('query_name'):
+                # Extracting the revenue
+                revenue = results[0][0]
+
+                # Creating the desired dictionary
+                response_data = {
+                    "label": "Last Year",
+                    "revenue": revenue
+                }
+                pass
 
             return Response(response_data, status=status.HTTP_200_OK)
         
